@@ -7,4 +7,5 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
     <preference for="Magento\Contact\Controller\Index\Post" type="Training\Practice\Controller\Index\Post" />
+    <preference for="Magento\Customer\Block\Form\Login" type="Training\Practice\Block\Form\Login" />
 </config>
