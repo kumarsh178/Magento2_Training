@@ -1,0 +1,154 @@
+Step To Create Ui Component Form in admin:
+
+Step1> Create Newpost.php admin controller in Controller\Adminhtml\Post folder.
+<?php
+
+namespace Custom\Blog\Controller\Adminhtml\Post;
+
+class Newpost extends \Magento\Backend\App\Action
+{
+	protected $resultPageFactory = false;
+
+	public function __construct(
+		\Magento\Backend\App\Action\Context $context,
+		\Magento\Framework\View\Result\PageFactory $resultPageFactory
+	)
+	{
+		parent::__construct($context);
+		$this->resultPageFactory = $resultPageFactory;
+	}
+
+	public function execute()
+	{
+		$resultPage = $this->resultPageFactory->create();
+		$resultPage->getConfig()->getTitle()->prepend((__('Add New Blog')));
+
+		return $resultPage;
+	}
+
+
+}
+
+Step2> create DataProvider.php class in model folder.
+<?php
+namespace Custom\Blog\Model;
+ 
+use Custom\Blog\Model\ResourceModel\Post\CollectionFactory;
+ 
+class DataProvider extends \Magento\Ui\DataProvider\AbstractDataProvider
+{
+
+	protected $collection;
+    /**
+     * @param string $name
+     * @param string $primaryFieldName
+     * @param string $requestFieldName
+     * @param CollectionFactory $postCollectionFactory
+     * @param array $meta
+     * @param array $data
+     */
+    public function __construct(
+        $name,
+        $primaryFieldName,
+        $requestFieldName,
+        CollectionFactory $postCollectionFactory,
+        array $meta = [],
+        array $data = []
+    ) {
+        $this->collection = $postCollectionFactory->create();
+        parent::__construct($name, $primaryFieldName, $requestFieldName, $meta, $data);
+    }
+ 
+    /**
+     * Get data
+     *
+     * @return array
+     */
+    public function getData()
+    {
+        return [];
+    }
+}
+
+Step3 > Create customblog_new_form.xml in view/adminhtml/ui_component folder
+<?xml version="1.0" encoding="UTF-8"?>
+<form xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <item name="provider" xsi:type="string">customblog_new_form.customblog_form_data_source</item>
+            <item name="deps" xsi:type="string">customblog_new_form.customblog_form_data_source</item>
+        </item>
+        <item name="label" xsi:type="string" translate="true">Add New Post</item>
+        <item name="config" xsi:type="array">
+            <item name="dataScope" xsi:type="string">data</item>
+            <item name="namespace" xsi:type="string">customblog_form</item>
+        </item>
+        <item name="template" xsi:type="string">templates/form/collapsible</item>
+    </argument>
+    <dataSource name="customblog_form_data_source">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Custom\Blog\Model\DataProvider</argument>
+            <argument name="name" xsi:type="string">customblog_form_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+        </argument>
+        <argument name="data" xsi:type="array">
+            <item name="js_config" xsi:type="array">
+                <item name="component" xsi:type="string">Magento_Ui/js/form/provider</item>
+            </item>
+        </argument>
+    </dataSource>
+    <fieldset name="customblog_new_form">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="collapsible" xsi:type="boolean">true</item>
+                <item name="label" xsi:type="string" translate="true">Add New Post</item>
+                <item name="sortOrder" xsi:type="number">20</item>
+            </item>
+        </argument>
+        <field name="name">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Name</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">customblog_form</item>
+                    <item name="dataScope" xsi:type="string">name</item>
+                </item>
+            </argument>
+        </field>
+        <field name="url_key">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Url key</item>
+                    <item name="formElement" xsi:type="string">input</item>
+                    <item name="source" xsi:type="string">customblog_form</item>
+                    <item name="dataScope" xsi:type="string">url_key</item>
+                </item>
+            </argument>
+        </field>
+        <field name="post_content">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="dataType" xsi:type="string">text</item>
+                    <item name="label" xsi:type="string" translate="true">Post Content</item>
+                    <item name="formElement" xsi:type="string">textarea</item>
+                    <item name="source" xsi:type="string">customblog_form</item>
+                    <item name="dataScope" xsi:type="string">post_content</item>
+                </item>
+            </argument>
+        </field>
+    </fieldset>
+</form>
+
+Step4> Create a handle name customblog_post_newpost.xml in view/adminhtml/layout folder
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../../lib/internal/Magento/Framework/View/Layout/etc/page_configuration.xsd">
+    <update handle="styles"/>
+    <body>
+        <referenceContainer name="content">
+            <uiComponent name="customblog_new_form"/>
+        </referenceContainer>
+    </body>
+</page>
