@@ -177,7 +177,7 @@ class InstallSchema implements \Magento\Framework\Setup\InstallSchemaInterface
 }
 ?>
 
-Step6->Create di.xml in etc/adminhtml folder:
+Step6->Create di.xml in etc folder:
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
     <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
         <arguments>
@@ -200,7 +200,7 @@ Step6->Create di.xml in etc/adminhtml folder:
 Step->7 Create Post.php in Model Folder:
 <?php
 namespace Custom\Blog\Model;
-class Post extends \Magento\Framework\Model\AbstractModel implements \Magento\Framework\DataObject\IdentityInterface
+class Post extends \Magento\Framework\Model\AbstractModel
 {
 	protected function _construct()
 	{
