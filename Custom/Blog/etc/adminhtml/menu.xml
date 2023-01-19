@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Custom_Blog::customblog" title="Custom Blog" module="Custom_Blog" sortOrder="51" resource="Custom_Blog::customblog"/>
+        <add id="Custom_Blog::post" title="Manage Posts" module="Custom_Blog" sortOrder="10" action="customblog/post" resource="Custom_Blog::post" parent="Custom_Blog::customblog"/>
+    </menu>
+</config>
