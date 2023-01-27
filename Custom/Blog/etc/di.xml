@@ -1,0 +1,18 @@
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+            	<!-- Data Source will be mentioned in listing xml -->
+                <item name="customblog_listing_data_source" xsi:type="string">Custom\Blog\Model\ResourceModel\Post\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+    <virtualType name="Custom\Blog\Model\ResourceModel\Post\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+        	<!-- Table name to insert data and listing data -->
+            <argument name="mainTable" xsi:type="string">custom_blog_post</argument>
+            <!-- Resource model name -->
+            <argument name="resourceModel" xsi:type="string">Custom\Blog\Model\ResourceModel\Post</argument>
+        </arguments>
+    </virtualType>
+</config>
