@@ -1,0 +1,529 @@
+Create Admin Grid:
+
+Step1->Create Module
+
+registeration.php
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+use \Magento\Framework\Component\ComponentRegistrar;
+
+ComponentRegistrar::register(ComponentRegistrar::MODULE, 'Custom_Blog', __DIR__); ?>
+
+etc/module.xml :
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
+    <module name="Custom_Blog" setup_version="1.1.0">
+    </module>
+</config>
+
+
+
+Step2->Create an routes.xml file in etc/adminhtml folder of the module:
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:App/etc/routes.xsd">
+    <router id="admin">
+        <route id="customblog" frontName="customblog">
+            <module name="Custom_Blog"/>
+        </route>
+    </router>
+</config>
+
+Step3-> Create menue.xml file etc/adminhtml folder of the module to display menue in admin.
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="Custom_Blog::customblog" title="Custom Blog" module="Custom_Blog" sortOrder="51" resource="Custom_Blog::customblog"/>
+        <add id="Custom_Blog::post" title="Manage Posts" module="Custom_Blog" sortOrder="10" action="customblog/post" resource="Custom_Blog::post" parent="Custom_Blog::customblog"/>
+    </menu>
+</config>
+
+Step4->Create Index.php controller in Controller/Adminhtml/Post folder of the module:
+<?php
+
+namespace Custom\Blog\Controller\Adminhtml\Post;
+
+class Index extends \Magento\Backend\App\Action
+{
+	protected $resultPageFactory = false;
+
+	public function __construct(
+		\Magento\Backend\App\Action\Context $context,
+		\Magento\Framework\View\Result\PageFactory $resultPageFactory
+	)
+	{
+		parent::__construct($context);
+		$this->resultPageFactory = $resultPageFactory;
+	}
+
+	public function execute()
+	{
+		$resultPage = $this->resultPageFactory->create();
+		$resultPage->getConfig()->getTitle()->prepend((__('Manage Custom Blogs')));
+
+		return $resultPage;
+	}
+
+
+}
+
+Step5->Create an install schema in Setup folder:
+<?php
+namespace Custom\Blog\Setup;
+
+class InstallSchema implements \Magento\Framework\Setup\InstallSchemaInterface
+{
+
+	public function install(\Magento\Framework\Setup\SchemaSetupInterface $setup, \Magento\Framework\Setup\ModuleContextInterface $context)
+	{
+		/** custom_blog_post is the table name **/
+		$installer = $setup;
+		$installer->startSetup();
+		if (!$installer->tableExists('custom_blog_post')) {
+			$table = $installer->getConnection()->newTable(
+				$installer->getTable('custom_blog_post')
+			)
+				->addColumn(
+					'post_id',
+					\Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+					null,
+					[
+						'identity' => true,
+						'nullable' => false,
+						'primary'  => true,
+						'unsigned' => true,
+					],
+					'Post ID'
+				)
+				->addColumn(
+					'name',
+					\Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+					255,
+					['nullable => false'],
+					'Post Name'
+				)
+				->addColumn(
+					'url_key',
+					\Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+					255,
+					[],
+					'Post URL Key'
+				)
+				->addColumn(
+					'post_content',
+					\Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+					'64k',
+					[],
+					'Post Post Content'
+				)
+				->addColumn(
+					'tags',
+					\Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+					255,
+					[],
+					'Post Tags'
+				)
+				->addColumn(
+					'status',
+					\Magento\Framework\DB\Ddl\Table::TYPE_INTEGER,
+					1,
+					[],
+					'Post Status'
+				)
+				->addColumn(
+					'featured_image',
+					\Magento\Framework\DB\Ddl\Table::TYPE_TEXT,
+					255,
+					[],
+					'Post Featured Image'
+				)
+				->addColumn(
+					'created_at',
+					\Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
+					null,
+					['nullable' => false, 'default' => \Magento\Framework\DB\Ddl\Table::TIMESTAMP_INIT],
+					'Created At'
+				)->addColumn(
+					'updated_at',
+					\Magento\Framework\DB\Ddl\Table::TYPE_TIMESTAMP,
+					null,
+					['nullable' => false, 'default' => \Magento\Framework\DB\Ddl\Table::TIMESTAMP_INIT_UPDATE],
+					'Updated At')
+				->setComment('Post Table');
+			$installer->getConnection()->createTable($table);
+
+			$installer->getConnection()->addIndex(
+				$installer->getTable('custom_blog_post'),
+				$setup->getIdxName(
+					$installer->getTable('custom_blog_post'),
+					['name', 'url_key', 'post_content', 'tags', 'featured_image'],
+					\Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_FULLTEXT
+				),
+				['name', 'url_key', 'post_content', 'tags', 'featured_image'],
+				\Magento\Framework\DB\Adapter\AdapterInterface::INDEX_TYPE_FULLTEXT
+			);
+		}
+		$installer->endSetup();
+	}
+}
+?>
+
+Step6->Create di.xml in etc folder:
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+            	<!-- Data Source will be mentioned in listing xml -->
+                <item name="customblog_listing_data_source" xsi:type="string">Custom\Blog\Model\ResourceModel\Post\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+    <virtualType name="Custom\Blog\Model\ResourceModel\Post\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+        	<!-- Table name to insert data and listing data -->
+            <argument name="mainTable" xsi:type="string">custom_blog_post</argument>
+            <!-- Resource model name -->
+            <argument name="resourceModel" xsi:type="string">Custom\Blog\Model\ResourceModel\Post</argument>
+        </arguments>
+    </virtualType>
+</config>
+
+Step->7 Create Post.php in Model Folder:
+<?php
+namespace Custom\Blog\Model;
+class Post extends \Magento\Framework\Model\AbstractModel
+{
+	protected function _construct()
+	{
+		$this->_init('Custom\Blog\Model\ResourceModel\Post');
+	}
+}
+
+Step->8 Create Post.php in Model/ResourceModel folder:
+<?php
+namespace Custom\Blog\Model\ResourceModel;
+
+
+class Post extends \Magento\Framework\Model\ResourceModel\Db\AbstractDb
+{
+	
+	public function __construct(
+		\Magento\Framework\Model\ResourceModel\Db\Context $context
+	)
+	{
+		parent::__construct($context);
+	}
+	
+	protected function _construct()
+	{
+		$this->_init('custom_blog_post', 'post_id');
+	}
+	
+}
+
+Step 9 -> Create Collection.php in Model/ResourceModel/Post/
+<?php
+namespace Custom\Blog\Model\ResourceModel\Post;
+
+class Collection extends \Magento\Framework\Model\ResourceModel\Db\Collection\AbstractCollection
+{
+	/**
+	 * Define resource model
+	 *
+	 * @return void
+	 */
+	protected function _construct()
+	{
+		$this->_init('Custom\Blog\Model\Post', 'Custom\Blog\Model\ResourceModel\Post');
+	}
+
+}
+
+Step 10 ->Create Collection.php in   Model/ResourceModel/Post/Grid folder:
+<?php
+
+namespace Custom\Blog\Model\ResourceModel\Post\Grid;
+
+class Collection extends \Custom\Blog\Model\ResourceModel\Post\Collection implements \Magento\Framework\Api\Search\SearchResultInterface
+{
+    /**
+     * Aggregations
+     * 
+     * @var \Magento\Framework\Search\AggregationInterface
+     */
+    protected $_aggregations;
+
+    /**
+     * constructor
+     * 
+     * @param \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory
+     * @param \Psr\Log\LoggerInterface $logger
+     * @param \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy
+     * @param \Magento\Framework\Event\ManagerInterface $eventManager
+     * @param $mainTable
+     * @param $eventPrefix
+     * @param $eventObject
+     * @param $resourceModel
+     * @param $model
+     * @param $connection
+     * @param \Magento\Framework\Model\ResourceModel\Db\AbstractDb $resource
+     */
+    public function __construct(
+        \Magento\Framework\Data\Collection\EntityFactoryInterface $entityFactory,
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Framework\Data\Collection\Db\FetchStrategyInterface $fetchStrategy,
+        \Magento\Framework\Event\ManagerInterface $eventManager,
+        $mainTable,
+        $eventPrefix,
+        $eventObject,
+        $resourceModel,
+        $model = 'Magento\Framework\View\Element\UiComponent\DataProvider\Document',
+        $connection = null,
+        \Magento\Framework\Model\ResourceModel\Db\AbstractDb $resource = null
+    )
+    {
+        parent::__construct($entityFactory, $logger, $fetchStrategy, $eventManager, $connection, $resource);
+        $this->_eventPrefix = $eventPrefix;
+        $this->_eventObject = $eventObject;
+        $this->_init($model, $resourceModel);
+        $this->setMainTable($mainTable);
+    }
+
+
+    /**
+     * @return \Magento\Framework\Search\AggregationInterface
+     */
+    public function getAggregations()
+    {
+        return $this->_aggregations;
+    }
+
+    /**
+     * @param \Magento\Framework\Search\AggregationInterface $aggregations
+     * @return $this
+     */
+    public function setAggregations($aggregations)
+    {
+        $this->_aggregations = $aggregations;
+    }
+
+
+    /**
+     * Retrieve all ids for collection
+     * Backward compatibility with EAV collection
+     *
+     * @param int $limit
+     * @param int $offset
+     * @return array
+     */
+    public function getAllIds($limit = null, $offset = null)
+    {
+        return $this->getConnection()->fetchCol($this->_getAllIdsSelect($limit, $offset), $this->_bindParams);
+    }
+
+    /**
+     * Get search criteria.
+     *
+     * @return \Magento\Framework\Api\SearchCriteriaInterface|null
+     */
+    public function getSearchCriteria()
+    {
+        return null;
+    }
+
+    /**
+     * Set search criteria.
+     *
+     * @param \Magento\Framework\Api\SearchCriteriaInterface $searchCriteria
+     * @return $this
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function setSearchCriteria(\Magento\Framework\Api\SearchCriteriaInterface $searchCriteria = null)
+    {
+        return $this;
+    }
+
+    /**
+     * Get total count.
+     *
+     * @return int
+     */
+    public function getTotalCount()
+    {
+        return $this->getSize();
+    }
+
+    /**
+     * Set total count.
+     *
+     * @param int $totalCount
+     * @return $this
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function setTotalCount($totalCount)
+    {
+        return $this;
+    }
+
+    /**
+     * Set items list.
+     *
+     * @param \Magento\Framework\Api\ExtensibleDataInterface[] $items
+     * @return $this
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+     */
+    public function setItems(array $items = null)
+    {
+        return $this;
+    }
+}
+
+Step 11> Create customblog_post_index.xml handle in view/adminhtml/layout:
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../../../lib/internal/Magento/Framework/View/Layout/etc/page_configuration.xsd">
+    <update handle="styles"/>
+    <body>
+        <referenceContainer name="content">
+            <uiComponent name="customblog_post_listing"/>
+        </referenceContainer>
+    </body>
+</page>
+
+Step12>Create customblog_post_listing.xml Ui component file in view/adminhtml/ui_component folder:
+<?xml version="1.0"?>
+<listing xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
+    <argument name="data" xsi:type="array">
+        <item name="js_config" xsi:type="array">
+            <!-- data source (customblog_listing_data_source) name is declared in di.xml --> 
+            <item name="provider" xsi:type="string">customblog_post_listing.customblog_listing_data_source</item>
+            <!-- customblog_post_listing is the ui component name in adminhtl/ui_component/customblog_post_listing.xml -->
+            <item name="deps" xsi:type="string">customblog_post_listing.customblog_listing_data_source</item>
+        </item>
+        <item name="spinner" xsi:type="string">spinner_columns</item>
+        <item name="buttons" xsi:type="array">
+            <item name="add" xsi:type="array">
+                <item name="name" xsi:type="string">add</item>
+                <item name="label" xsi:type="string" translate="true">Add New Post</item>
+                <item name="class" xsi:type="string">primary</item>
+                <item name="url" xsi:type="string">*/*/new</item>
+            </item>
+        </item>
+    </argument>
+    <dataSource name="nameOfDataSource">
+        <argument name="dataProvider" xsi:type="configurableObject">
+            <argument name="class" xsi:type="string">Magento\Framework\View\Element\UiComponent\DataProvider\DataProvider</argument>
+            <argument name="name" xsi:type="string">customblog_listing_data_source</argument>
+            <argument name="primaryFieldName" xsi:type="string">post_id</argument>
+            <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/provider</item>
+                    <item name="update_url" xsi:type="url" path="mui/index/render"/>
+                    <item name="storageConfig" xsi:type="array">
+                        <item name="indexField" xsi:type="string">post_id</item>
+                    </item>
+                </item>
+            </argument>
+        </argument>
+    </dataSource>
+     <!-- ... other block of code -->
+    <listingToolbar name="listing_top">
+        <argument name="data" xsi:type="array">
+            <item name="config" xsi:type="array">
+                <item name="sticky" xsi:type="boolean">true</item>
+            </item>
+        </argument> 
+        <bookmark name="bookmarks"/>
+        <columnsControls name="columns_controls"/>
+        <filterSearch name="fulltext"/>
+        <filters name="listing_filters" />
+        <paging name="listing_paging"/>
+        <exportButton name="export_button"/>
+        <massaction name="listing_massaction">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/tree-massactions</item>
+                </item>
+            </argument>
+            <action name="delete">
+                <argument name="data" xsi:type="array">
+                    <item name="config" xsi:type="array">
+                        <item name="type" xsi:type="string">delete</item>
+                        <item name="label" xsi:type="string" translate="true">Delete</item>
+                        <item name="url" xsi:type="url" path="customblog/post/massDelete"/>
+                        <item name="confirm" xsi:type="array">
+                            <item name="title" xsi:type="string" translate="true">Delete Post</item>
+                            <item name="message" xsi:type="string" translate="true">Are you sure you wan't to delete selected items?</item>
+                        </item>
+                    </item>
+                </argument>
+            </action>
+        </massaction>
+    </listingToolbar>
+  
+    <columns name="spinner_columns">
+        <selectionsColumn name="ids">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="resizeEnabled" xsi:type="boolean">false</item>
+                    <item name="resizeDefaultWidth" xsi:type="string">55</item>
+                    <item name="indexField" xsi:type="string">post_id</item>
+                </item>
+            </argument>
+        </selectionsColumn>
+        <column name="post_id">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">textRange</item>
+                    <item name="sorting" xsi:type="string">asc</item>
+                    <item name="label" xsi:type="string" translate="true">ID</item>
+                </item>
+            </argument>
+        </column>
+        <column name="name">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">text</item>
+                    <item name="editor" xsi:type="array">
+                        <item name="editorType" xsi:type="string">text</item>
+                        <item name="validation" xsi:type="array">
+                            <item name="required-entry" xsi:type="boolean">true</item>
+                        </item>
+                    </item>
+                    <item name="label" xsi:type="string" translate="true">Name</item>
+                </item>
+            </argument>
+        </column>
+        <column name="created_at" class="Magento\Ui\Component\Listing\Columns\Date">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">dateRange</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
+                    <item name="dataType" xsi:type="string">date</item>
+                    <item name="label" xsi:type="string" translate="true">Created</item>
+                </item>
+            </argument>
+        </column>
+        <column name="updated_at" class="Magento\Ui\Component\Listing\Columns\Date">
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="filter" xsi:type="string">dateRange</item>
+                    <item name="component" xsi:type="string">Magento_Ui/js/grid/columns/date</item>
+                    <item name="dataType" xsi:type="string">date</item>
+                    <item name="label" xsi:type="string" translate="true">Modified</item>
+                </item>
+            </argument>
+        </column>
+    </columns>
+</listing>
+
+Step13>Run the upgrade and content deploy command then you will find custom blog menu in admin.
