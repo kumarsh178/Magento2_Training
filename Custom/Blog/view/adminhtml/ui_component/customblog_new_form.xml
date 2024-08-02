@@ -16,14 +16,16 @@
         </item>
     </argument>
     <dataSource name="customblog_form_data_source">
-        <settings>
-            <submitUrl path="customblog/post/savepost"/>
-        </settings>
         <argument name="dataProvider" xsi:type="configurableObject">
             <argument name="class" xsi:type="string">Custom\Blog\Model\DataProvider</argument>
             <argument name="name" xsi:type="string">customblog_form_data_source</argument>
             <argument name="primaryFieldName" xsi:type="string">id</argument>
             <argument name="requestFieldName" xsi:type="string">id</argument>
+            <argument name="data" xsi:type="array">
+                <item name="config" xsi:type="array">
+                    <item name="submit_url" xsi:type="url" path="customblog/post/savepost"/>
+                </item>
+            </argument>
         </argument>
         <argument name="data" xsi:type="array">
             <item name="js_config" xsi:type="array">
