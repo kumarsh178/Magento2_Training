@@ -6,7 +6,8 @@ use Custom\Blog\Model\ResourceModel\Post\CollectionFactory;
 class DataProvider extends \Magento\Ui\DataProvider\AbstractDataProvider
 {
 
-	protected $collection;
+   protected $collection;
+   protected $loadedData = [];
     /**
      * @param string $name
      * @param string $primaryFieldName
@@ -35,7 +36,6 @@ class DataProvider extends \Magento\Ui\DataProvider\AbstractDataProvider
     public function getData()
     {
         $items = $this->collection->getItems();
-        $this->loadedData = array();
         /** @var Customer $customer */
         foreach ($items as $blog) {
             $this->loadedData[$blog->getId()] = $blog->getData();
