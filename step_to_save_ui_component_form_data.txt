@@ -1,0 +1,109 @@
+Step1>Create a Generic.php file in Block\Adminhtml\Edit\Button folder
+<?php
+
+namespace Custom\Blog\Block\Adminhtml\Edit\Button;
+
+use Magento\Backend\Block\Widget\Context;
+
+class Generic
+{
+    protected $context;
+    protected $pageRepository;
+
+    public function __construct(
+        Context $context
+    ) {
+        $this->context = $context;
+    }
+
+    public function getUrl($route = '', $params = [])
+    {
+        return $this->context->getUrlBuilder()->getUrl($route, $params);
+    }
+}
+
+Step2> Create a Save.php block file in Block\Adminhtml\Edit\Button folder
+<?php
+
+namespace Custom\Blog\Block\Adminhtml\Edit\Button;
+
+use Magento\Framework\View\Element\UiComponent\Control\ButtonProviderInterface;
+use Magento\Ui\Component\Control\Container;
+
+class Save extends Generic implements ButtonProviderInterface
+{
+    public function getButtonData()
+    {
+        return [
+            'label' => __('Save'),
+            'class' => 'save primary',
+            'data_attribute' => [
+                'mage-init' => [
+                    'buttonAdapter' => [
+                        'actions' => [
+                            [
+                                'targetName' => 'customblog_new_form.customblog_new_form',
+                                'actionName' => 'save',
+                                'params' => [
+                                    false,
+                                ],
+                            ],
+                        ],
+                    ],
+                ],
+            ],
+        ];
+    }
+
+}
+
+Step3>Add below xml tag in ui component form in datasource tag:
+ <settings>
+            <submitUrl path="customblog/post/savepost"/>
+        </settings>
+	
+Step4>Create a Savepost.php in Controller\Adminhtml\Post folder:
+
+<?php
+
+namespace Custom\Blog\Controller\Adminhtml\Post;
+
+class Savepost extends \Magento\Backend\App\Action
+{
+	protected $resultPageFactory = false;
+	protected $postFactory;
+
+	public function __construct(
+		\Magento\Backend\App\Action\Context $context,
+		\Magento\Framework\View\Result\PageFactory $resultPageFactory,
+		\Custom\Blog\Model\PostFactory $postFactory
+	)
+	{
+		$this->postFactory = $postFactory;
+		parent::__construct($context);
+		$this->resultPageFactory = $resultPageFactory;
+	}
+
+	public function execute()
+	{
+		$data = $this->getRequest()->getPostValue();
+      /** @var \Magento\Backend\Model\View\Result\Redirect $resultRedirect */
+        $resultRedirect = $this->resultRedirectFactory->create();
+	     try{
+	     /** @var \Magento\Cms\Model\Page $model */
+	           $model = $this->postFactory->create();
+			   $model->setData($data);
+			   $model->save();
+		    	$this->messageManager->addSuccessMessage(__('You saved the post.'));
+			}catch(\Exception $e){
+				 $this->messageManager->addExceptionMessage($e, __('Something went wrong while saving the post.'));
+			}
+	 return $resultRedirect->setPath('*/*/');
+	}
+
+
+}
+Step5> Add below xml in argument name data in the ui component form
+<item name="buttons" xsi:type="array">
+            <item name="save" xsi:type="string">Custom\Blog\Block\Adminhtml\Edit\Button\Save</item>
+</item>
