@@ -28,6 +28,7 @@ class Savepost extends \Magento\Backend\App\Action
 	     try{
 	        /** @var \Magento\Cms\Model\Page $model */
 	           if(isset($id) && !empty($id)){
+			   unset($data['post_id']);
 	           	   $model = $this->postFactory->create()->load($id);
 				   $model->addData($data);
 				   $model->save();
