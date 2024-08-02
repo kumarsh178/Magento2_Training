@@ -32,6 +32,7 @@ class Savepost extends \Magento\Backend\App\Action
 				   $model->addData($data);
 				   $model->save();
 	           }else{
+			   unset($data['post_id']);
 		           $model = $this->postFactory->create();
 				   $model->setData($data);
 				   $model->save();
