@@ -1,0 +1,41 @@
+services:
+  web:
+    build: .
+    container_name: magento_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html
+    depends_on:
+      - db
+      - search
+
+  db:
+    image: mysql:8.0
+    container_name: magento_db
+    command: 
+     --default-authentication-plugin=mysql_native_password
+     --log-bin-trust-function-creators=1
+    environment:
+      MYSQL_DATABASE: magento
+      MYSQL_USER: magento
+      MYSQL_PASSWORD: magento
+      MYSQL_ROOT_PASSWORD: root
+    volumes:
+      - db_data:/var/lib/mysql
+
+  search:
+    image: opensearchproject/opensearch:2.12.0
+    container_name: magento_search
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - search_data:/usr/share/opensearch/data
+
+volumes:
+  db_data:
+  search_data:
